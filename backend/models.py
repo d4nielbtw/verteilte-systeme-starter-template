@@ -10,7 +10,8 @@ class User(Base):
     username = Column(String(100), unique=True, nullable=False)
     email = Column(String(200), unique=True, nullable=False)
     hashed_password = Column(String(200), nullable=False)
-
+    created_at    = Column(DateTime, server_default=func.now())
+    
 
 # TODO: Fügt hier eure eigenen Modelle hinzu
 # class Item(Base):
