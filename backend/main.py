@@ -4,6 +4,8 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+
 
 from auth import (
     DUMMY_HASH,
@@ -24,10 +26,18 @@ app = FastAPI(title="Mein Projekt", version="0.1.0")
 # ---------------------------------------------------------------------------
 # Health Check
 # ---------------------------------------------------------------------------
-
+# Datenbank verbindung wird gecheckt
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health_check(db: Session = Depends(get_db)):
+    try:
+        # Führt eine minimale Abfrage aus, die keine Last erzeugt
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:  
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Database connection failed: {str(e)}"
+        )
 
 
 # ---------------------------------------------------------------------------
