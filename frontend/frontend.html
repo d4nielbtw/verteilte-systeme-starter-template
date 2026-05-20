@@ -1,49 +1,62 @@
 <!DOCTYPE html>
-<div id="loginScreen">
-  <div class="card">
-    <h1>Anmelden</h1>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anmelden</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
 
-    <div class="field">
-      <label for="user">Benutzername</label>
-      <input type="text" id="user" placeholder="Benutzername" autocomplete="username"/>
+  <!-- LOGIN -->
+  <div id="loginScreen">
+    <div class="card">
+      <h1>Anmelden</h1>
+
+      <div class="field">
+        <label for="user">Benutzername</label>
+        <input type="text" id="user" placeholder="Benutzername" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label for="pass">Passwort</label>
+        <input type="password" id="pass" placeholder="Passwort" autocomplete="current-password"/>
+      </div>
+
+      <p class="error" id="err">Benutzername oder Passwort falsch.</p>
+
+      <button class="btn" onclick="login()">Anmelden</button>
     </div>
-    <div class="field">
-      <label for="pass">Passwort</label>
-      <input type="password" id="pass" placeholder="Passwort" autocomplete="current-password"/>
-    </div>
-
-    <p class="error" id="err">Benutzername oder Passwort falsch.</p>
-
-    <button class="btn" onclick="login()">Anmelden</button>
   </div>
-</div>
 
-<!-- HAUPTSEITE-->
-<div id="mainPage">
+  <!-- HAUPTSEITE -->
+  <div id="mainPage">
 
-  <!--Inhalt-->
+    <!--Inhalt Hauptseite-->
 
-</div>
+  </div>
 
-<script>
-  //Zugangsdaten hier ändern
-  const USER = 'admin';
-  const PASS = 'passwort123';
+  <script>
+    //Zugangsdaten
+    const USER = 'admin';
+    const PASS = 'passwort123';
 
-  function login() {
-    const u = document.getElementById('user').value.trim();
-    const p = document.getElementById('pass').value;
-    const err = document.getElementById('err');
+    function login() {
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value;
+      const err = document.getElementById('err');
 
-    if (u === USER && p === PASS) {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainPage').style.display = 'block';
-    } else {
-      err.classList.add('show');
+      if (u === USER && p === PASS) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainPage').style.display = 'block';
+      } else {
+        err.classList.add('show');
+      }
     }
-  }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-</script>
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
+  </script>
 </body>
 </html>
