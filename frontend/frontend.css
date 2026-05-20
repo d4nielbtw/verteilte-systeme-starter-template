@@ -89,11 +89,11 @@ body {
     }
     .btn:hover { background: #333; }
 
-    /* ── Main Page (hidden until login) ── */
+    /* ── Main Page (versteckt bis login fertig ist) ── */
     #mainPage {
       display: none;
       width: 100%;
       min-height: 100vh;
       background: #fff;
-      /* ↓↓↓ Hier kannst du deine Seite gestalten ↓↓↓ */
+      /* ↓↓↓ Main page ↓↓↓ */
     }
