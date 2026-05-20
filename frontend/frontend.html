@@ -1,33 +1,50 @@
 <!DOCTYPE html>
-<html>
+<div id="loginScreen">
+  <div class="card">
+    <h1>Anmelden</h1>
+    <p class="sub">Bitte gib deine Zugangsdaten ein.</p>
 
-<form action="action_page.php" method="post">
-  <div class="imgcontainer">
-    <img src="img_avatar2.png" alt="Avatar" class="avatar">
+    <div class="field">
+      <label for="user">Benutzername</label>
+      <input type="text" id="user" placeholder="Benutzername" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label for="pass">Passwort</label>
+      <input type="password" id="pass" placeholder="Passwort" autocomplete="current-password"/>
+    </div>
+
+    <p class="error" id="err">Benutzername oder Passwort falsch.</p>
+
+    <button class="btn" onclick="login()">Anmelden</button>
   </div>
+</div>
 
-  <div class="container">
-    <label for="uname"><b>Username</b></label>
-    <input type="text" placeholder="Enter Username" name="uname" required>
+<!-- HAUPTSEITE – hier kannst du alles bearbeiten -->
+<div id="mainPage">
 
-    <label for="psw"><b>Password</b></label>
-    <input type="password" placeholder="Enter Password" name="psw" required>
+  <!-- ✏️ Dein Inhalt kommt hier rein -->
 
-    <button type="submit">Login</button>
-    <label>
-      <input type="checkbox" checked="checked" name="remember"> Remember me
-    </label>
-  </div>
+</div>
 
-  <div class="container" style="background-color:#f1f1f1">
-    <button type="button" class="cancelbtn">Cancel</button>
-    <span class="psw">Forgot <a href="#">password?</a></span>
-  </div>
-</form>
-<head>
-    <title>My First Web Page</title>
-    <link rel="stylesheet" href="frontend.css">
-</head>
-<body>
+<script>
+  // 🔑 Zugangsdaten hier ändern
+  const USER = 'admin';
+  const PASS = 'passwort123';
+
+  function login() {
+    const u = document.getElementById('user').value.trim();
+    const p = document.getElementById('pass').value;
+    const err = document.getElementById('err');
+
+    if (u === USER && p === PASS) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainPage').style.display = 'block';
+    } else {
+      err.classList.add('show');
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
 </body>
 </html>
