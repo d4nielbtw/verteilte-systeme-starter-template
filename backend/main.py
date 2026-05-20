@@ -14,8 +14,9 @@ from auth import (
     get_password_hash,
     verify_password,
 )
+
 from database import Base, engine, get_db
-from models import User
+from models import User, Kochrezepte
 from schemas import Token, UserRegister, UserResponse
 
 # Tabellen anlegen (falls noch nicht vorhanden)

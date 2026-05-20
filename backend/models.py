@@ -1,31 +1,30 @@
-from sqlalchemy import Column, Integer, String, DateTime, func
-from database import Base
+import datetime
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy.sql import func
 
-
+from database import Base 
 
 class User(Base):
-    """Benutzertabelle – hier könnt ihr weitere Felder ergänzen."""
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), unique=True, nullable=False)
-    email = Column(String(200), unique=True, nullable=False)
-    hashed_password = Column(String(200), nullable=False)
-    created_at    = Column(DateTime, server_default=func.now())
+    id              : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username        : Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    email           : Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
+    hashed_password : Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at      : Mapped[datetime.date] = mapped_column(server_default=func.now())
+
+    rezepte: Mapped[list["Kochrezepte"]] = relationship(back_populates="autor")
+
+
+class Kochrezepte(Base):
+    __tablename__ = "Kochrezepte"
+
+    id          : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    Kochrezept_Name        : Mapped[str] = mapped_column(String(100), nullable=False)
+    username    : Mapped[str] = mapped_column(String(100), ForeignKey("users.username"))
+    image_url   : Mapped[str] = mapped_column(String(500), nullable=False)
+    description : Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at  : Mapped[datetime.date] = mapped_column(server_default=func.now())
     
-
-# TODO: Fügt hier eure eigenen Modelle hinzu
-# class Item(Base):
-#     __tablename__ = "items"
-#     id    = Column(Integer, primary_key=True, index=True)
-#     name  = Column(String(100), nullable=False)
-#     ...
-
-class Item(Base):
-    __tablename__ = "items"
-
-    id          = Column(Integer, primary_key=True, index=True)
-    name        = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)           # Beschreibung (langer Text)
-    image_url   = Column(String(500), nullable=True)    # Bild als URL/Pfad
-    created_at  = Column(DateTime, server_default=func.now())
+    autor: Mapped["User"] = relationship(back_populates="rezepte")
