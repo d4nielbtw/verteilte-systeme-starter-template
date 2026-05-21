@@ -1,10 +1,9 @@
 <script>
-  let username = '';
-  let password = '';
-  let error = false;
-  let loggedIn = false;
+  let username = $state('');
+  let password = $state('');
+  let error = $state(false);
+  let loggedIn = $state(false);
 
-  //Zugangsdaten  (später aus Datenbank)
   const VALID_USER = 'admin';
   const VALID_PASS = 'passwort123';
 
@@ -26,9 +25,8 @@
 
       <label>Benutzername</label>
       <input type="text" bind:value={username} placeholder="Benutzername"/>
-
-      <label>Passwort</label>
       <input type="password" bind:value={password} placeholder="Passwort"/>
+      <button onclick={login}>Anmelden</button>
 
       {#if error}
         <p class="error">Benutzername oder Passwort falsch.</p>
