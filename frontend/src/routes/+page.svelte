@@ -34,7 +34,7 @@
         <p class="error">Benutzername oder Passwort falsch.</p>
       {/if}
 
-      <button onclick={login}>Anmelden</button>
+      <button on:click={login}>Anmelden</button>
     </div>
   </div>
 
