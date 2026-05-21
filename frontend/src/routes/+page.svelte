@@ -25,7 +25,7 @@
 
       <label>Benutzername</label>
       <input type="text" bind:value={username} placeholder="Benutzername"/>
-      
+      <label>Passwort</label>
       <input type="password" bind:value={password} placeholder="Passwort"/>
 
       {#if error}
