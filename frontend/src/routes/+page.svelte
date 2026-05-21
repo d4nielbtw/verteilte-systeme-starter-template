@@ -25,8 +25,8 @@
 
       <label>Benutzername</label>
       <input type="text" bind:value={username} placeholder="Benutzername"/>
+      
       <input type="password" bind:value={password} placeholder="Passwort"/>
-      <button onclick={login}>Anmelden</button>
 
       {#if error}
         <p class="error">Benutzername oder Passwort falsch.</p>
