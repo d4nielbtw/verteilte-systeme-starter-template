@@ -33,4 +33,4 @@ def create_access_token(subject: int) -> str:
 def decode_access_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
 
-# Diese Datei soll am besten in auth.py hinzugefügt und angepasst werden
+#Selbsterstellt, Brauchen? 

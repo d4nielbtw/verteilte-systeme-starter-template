@@ -27,3 +27,6 @@ def get_current_user(
     if user is None:
         raise credentials_exc
     return user
+
+
+#Selbsterstellt, Brauchen? 
