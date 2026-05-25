@@ -32,12 +32,20 @@ class Token(BaseModel):
 
 
 # TODO: Fügt hier eure eigenen Schemas hinzu
-# class ItemCreate(BaseModel):
-#     name: str
-#     price: int
-#
-# class ItemResponse(BaseModel):
-#     id: int
-#     name: str
-#     price: int
-#     model_config = {"from_attributes": True}
+
+class RezeptCreate(BaseModel):
+    Kochrezept_Name: str
+    kategorie: str
+    zeit: str
+    zutaten: str
+    description: str
+
+class RezeptResponse(BaseModel):
+    id: int
+    Kochrezept_Name: str
+    kategorie: str
+    zeit: str
+    zutaten: str
+    description: str
+
+    model_config = {"from_attributes": True}

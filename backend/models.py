@@ -20,11 +20,13 @@ class User(Base):
 class Kochrezepte(Base):
     __tablename__ = "Kochrezepte"
 
-    id          : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    Kochrezept_Name        : Mapped[str] = mapped_column(String(100), nullable=False)
-    username    : Mapped[str] = mapped_column(String(100), ForeignKey("users.username"))
-    image_url   : Mapped[str] = mapped_column(String(500), nullable=False)
-    description : Mapped[str] = mapped_column(String(500), nullable=False)
-    created_at  : Mapped[datetime.date] = mapped_column(server_default=func.now())
-    
+    id              : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    Kochrezept_Name : Mapped[str] = mapped_column(String(100), nullable=False)
+    username        : Mapped[str] = mapped_column(String(100), ForeignKey("users.username"))
+    kategorie       : Mapped[str] = mapped_column(String(100), nullable=False)
+    zeit            : Mapped[str] = mapped_column(String(50), nullable=False)
+    zutaten         : Mapped[str] = mapped_column(String(1000), nullable=False)
+    description     : Mapped[str] = mapped_column(String(500), nullable=False)
+    created_at      : Mapped[datetime.date] = mapped_column(server_default=func.now())
+
     autor: Mapped["User"] = relationship(back_populates="rezepte")

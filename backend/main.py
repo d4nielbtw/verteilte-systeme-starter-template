@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from schemas import Token, UserRegister, UserResponse, RezeptCreate, RezeptResponse
 
 
 from auth import (
@@ -100,6 +101,64 @@ def get_profile(
 
 # ---------------------------------------------------------------------------
 # TODO: Eure eigenen Endpoints hier einfügen
+
+@app.get("/rezepte", response_model=list[RezeptResponse])
+def get_rezepte(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    return db.query(Kochrezepte).filter(Kochrezepte.username == current_username).all()
+
+
+@app.post("/rezepte", response_model=RezeptResponse, status_code=201)
+def create_rezept(
+    data: RezeptCreate,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = Kochrezepte(**data.model_dump(), username=current_username)
+    db.add(rezept)
+    db.commit()
+    db.refresh(rezept)
+    return rezept
+
+
+@app.delete("/rezepte/{rezept_id}", status_code=204)
+def delete_rezept(
+    rezept_id: int,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = db.query(Kochrezepte).filter(
+        Kochrezepte.id == rezept_id,
+        Kochrezepte.username == current_username
+    ).first()
+    if not rezept:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    db.delete(rezept)
+    db.commit()
+
+
+@app.put("/rezepte/{rezept_id}", response_model=RezeptResponse)
+def update_rezept(
+    rezept_id: int,
+    data: RezeptCreate,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = db.query(Kochrezepte).filter(
+        Kochrezepte.id == rezept_id,
+        Kochrezepte.username == current_username
+    ).first()
+    if not rezept:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    for key, value in data.model_dump().items():
+        setattr(rezept, key, value)
+    db.commit()
+    db.refresh(rezept)
+    return rezept
+
+
 # ---------------------------------------------------------------------------
 
 # Beispiel:

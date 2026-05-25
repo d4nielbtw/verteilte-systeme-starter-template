@@ -6,15 +6,15 @@
   let error = $state('');
   let loggedIn = $state(false);
   let showRegister = $state(false);
+  let token = $state('');
 
   // Rezepte
-  let recipes = $state([
-    { id: 1, title: 'Spaghetti Bolognese', category: 'Pasta', time: '30 min', ingredients: 'Hackfleisch, Tomaten, Zwiebeln', description: 'Klassische italienische Bolognese.' },
-    { id: 2, title: 'Pancakes', category: 'Frühstück', time: '20 min', ingredients: 'Mehl, Eier, Milch, Butter', description: 'Fluffige amerikanische Pancakes.' },
-  ]);
+  let recipes = $state([]);
   let showForm = $state(false);
   let editRecipe = $state(null);
-  let form = $state({ title: '', category: '', time: '', ingredients: '', description: '' });
+  let form = $state({ Kochrezept_Name: '', kategorie: '', zeit: '', zutaten: '', description: '' });
+
+  const API = 'http://localhost:8000';
 
   // Auth Funktionen
   async function login() {
@@ -23,15 +23,17 @@
     formData.append('username', username);
     formData.append('password', password);
 
-    const res = await fetch('http://localhost:8000/token', {
+    const res = await fetch(`${API}/token`, {
       method: 'POST',
       body: formData
     });
 
     if (res.ok) {
       const data = await res.json();
-      localStorage.setItem('token', data.access_token);
+      token = data.access_token;
+      localStorage.setItem('token', token);
       loggedIn = true;
+      await loadRecipes();
     } else {
       error = 'Benutzername oder Passwort falsch.';
     }
@@ -39,7 +41,7 @@
 
   async function register() {
     error = '';
-    const res = await fetch('http://localhost:8000/auth/register', {
+    const res = await fetch(`${API}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password })
@@ -58,30 +60,66 @@
   }
 
   // Rezept Funktionen
+  async function loadRecipes() {
+    const res = await fetch(`${API}/rezepte`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      recipes = await res.json();
+    }
+  }
+
   function openAdd() {
     editRecipe = null;
-    form = { title: '', category: '', time: '', ingredients: '', description: '' };
+    form = { Kochrezept_Name: '', kategorie: '', zeit: '', zutaten: '', description: '' };
     showForm = true;
   }
 
   function openEdit(r) {
     editRecipe = r;
-    form = { ...r };
+    form = {
+      Kochrezept_Name: r.Kochrezept_Name,
+      kategorie: r.kategorie,
+      zeit: r.zeit,
+      zutaten: r.zutaten,
+      description: r.description
+    };
     showForm = true;
   }
 
-  function saveRecipe() {
-    if (!form.title) return;
+  async function saveRecipe() {
+    if (!form.Kochrezept_Name) return;
+
     if (editRecipe) {
-      recipes = recipes.map(r => r.id === editRecipe.id ? { ...form, id: r.id } : r);
+      const res = await fetch(`${API}/rezepte/${editRecipe.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) await loadRecipes();
     } else {
-      recipes = [...recipes, { ...form, id: Date.now() }];
+      const res = await fetch(`${API}/rezepte`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) await loadRecipes();
     }
     showForm = false;
   }
 
-  function deleteRecipe(id) {
-    recipes = recipes.filter(r => r.id !== id);
+  async function deleteRecipe(id) {
+    const res = await fetch(`${API}/rezepte/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) await loadRecipes();
   }
 </script>
 
@@ -141,16 +179,20 @@
       <button class="btn-add" onclick={openAdd}>+ Rezept hinzufügen</button>
     </header>
 
+    {#if recipes.length === 0}
+      <p class="empty">Noch keine Rezepte. Füge dein erstes hinzu!</p>
+    {/if}
+
     <div class="grid">
       {#each recipes as r}
         <div class="recipe-card">
           <div class="recipe-top">
-            <span class="category">{r.category}</span>
-            <span class="time">⏱ {r.time}</span>
+            <span class="category">{r.kategorie}</span>
+            <span class="time">⏱ {r.zeit}</span>
           </div>
-          <h3>{r.title}</h3>
+          <h3>{r.Kochrezept_Name}</h3>
           <p class="desc">{r.description}</p>
-          <p class="ingredients"><strong>Zutaten:</strong> {r.ingredients}</p>
+          <p class="ingredients"><strong>Zutaten:</strong> {r.zutaten}</p>
           <div class="actions">
             <button class="btn-edit" onclick={() => openEdit(r)}>Bearbeiten</button>
             <button class="btn-delete" onclick={() => deleteRecipe(r.id)}>Löschen</button>
@@ -165,16 +207,16 @@
           <h3>{editRecipe ? 'Rezept bearbeiten' : 'Neues Rezept'}</h3>
 
           <label for="title">Titel</label>
-          <input type="text" id="title" bind:value={form.title} placeholder="z.B. Spaghetti Bolognese"/>
+          <input type="text" id="title" bind:value={form.Kochrezept_Name} placeholder="z.B. Spaghetti Bolognese"/>
 
           <label for="cat">Kategorie</label>
-          <input type="text" id="cat" bind:value={form.category} placeholder="z.B. Pasta"/>
+          <input type="text" id="cat" bind:value={form.kategorie} placeholder="z.B. Pasta"/>
 
-          <label for="time">Zeit</label>
-          <input type="text" id="time" bind:value={form.time} placeholder="z.B. 30 min"/>
+          <label for="zeit">Zeit</label>
+          <input type="text" id="zeit" bind:value={form.zeit} placeholder="z.B. 30 min"/>
 
           <label for="ingr">Zutaten</label>
-          <input type="text" id="ingr" bind:value={form.ingredients} placeholder="z.B. Mehl, Eier, Milch"/>
+          <input type="text" id="ingr" bind:value={form.zutaten} placeholder="z.B. Mehl, Eier, Milch"/>
 
           <label for="descr">Beschreibung</label>
           <textarea id="descr" bind:value={form.description} placeholder="Kurze Beschreibung..."></textarea>
@@ -300,6 +342,12 @@
     width: auto;
     padding: 9px 18px;
     font-size: 13px;
+  }
+
+  .empty {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 20px;
   }
 
   .grid {
