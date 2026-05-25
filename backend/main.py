@@ -5,7 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from schemas import Token, UserRegister, UserResponse, RezeptCreate, RezeptResponse
+from schemas import Token, UserRegister, UserResponse, RezeptCreate, RezeptResponse, BewertungCreate, BewertungResponse
+from models import User, Kochrezepte, Bewertung
+from sqlalchemy import func as sqlfunc
+from sqlalchemy.orm import joinedload
 
 
 from auth import (
@@ -21,6 +24,7 @@ from models import User, Kochrezepte
 from schemas import Token, UserRegister, UserResponse
 
 # Tabellen anlegen (falls noch nicht vorhanden)
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Mein Projekt", version="0.1.0")
@@ -107,8 +111,8 @@ def get_rezepte(
     current_username: Annotated[str, Depends(get_current_user)],
     db: Session = Depends(get_db)
 ):
-    return db.query(Kochrezepte).filter(Kochrezepte.username == current_username).all()
-
+    rezepte = db.query(Kochrezepte).options(joinedload(Kochrezepte.bewertungen)).filter(Kochrezepte.username == current_username).all()
+    return [rezept_mit_bewertung(r) for r in rezepte]
 
 @app.post("/rezepte", response_model=RezeptResponse, status_code=201)
 def create_rezept(
@@ -157,6 +161,111 @@ def update_rezept(
     db.commit()
     db.refresh(rezept)
     return rezept
+
+def rezept_mit_bewertung(rezept):
+    bewertungen = rezept.bewertungen
+    anzahl = len(bewertungen)
+    durchschnitt = round(sum(b.sterne for b in bewertungen) / anzahl, 1) if anzahl > 0 else 0.0
+    return {
+        "id": rezept.id,
+        "Kochrezept_Name": rezept.Kochrezept_Name,
+        "kategorie": rezept.kategorie,
+        "zeit": rezept.zeit,
+        "zutaten": rezept.zutaten,
+        "description": rezept.description,
+        "image_url": rezept.image_url,
+        "is_public": rezept.is_public,
+        "durchschnitt": durchschnitt,
+        "anzahl_bewertungen": anzahl
+    }
+
+@app.get("/startseite", response_model=list[RezeptResponse])
+def get_oeffentliche_rezepte(db: Session = Depends(get_db)):
+    rezepte = db.query(Kochrezepte).options(joinedload(Kochrezepte.bewertungen)).filter(Kochrezepte.is_public == True).all()
+    return [rezept_mit_bewertung(r) for r in rezepte]
+
+@app.get("/rezepte", response_model=list[RezeptResponse])
+def get_rezepte(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezepte = db.query(Kochrezepte).filter(Kochrezepte.username == current_username).all()
+    return [rezept_mit_bewertung(r) for r in rezepte]
+
+@app.post("/rezepte", response_model=RezeptResponse, status_code=201)
+def create_rezept(
+    data: RezeptCreate,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = Kochrezepte(**data.model_dump(), username=current_username)
+    db.add(rezept)
+    db.commit()
+    db.refresh(rezept)
+    return rezept_mit_bewertung(rezept)
+
+@app.delete("/rezepte/{rezept_id}", status_code=204)
+def delete_rezept(
+    rezept_id: int,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = db.query(Kochrezepte).filter(
+        Kochrezepte.id == rezept_id,
+        Kochrezepte.username == current_username
+    ).first()
+    if not rezept:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    db.delete(rezept)
+    db.commit()
+
+@app.put("/rezepte/{rezept_id}", response_model=RezeptResponse)
+def update_rezept(
+    rezept_id: int,
+    data: RezeptCreate,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    rezept = db.query(Kochrezepte).filter(
+        Kochrezepte.id == rezept_id,
+        Kochrezepte.username == current_username
+    ).first()
+    if not rezept:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    for key, value in data.model_dump().items():
+        setattr(rezept, key, value)
+    db.commit()
+    db.refresh(rezept)
+    return rezept_mit_bewertung(rezept)
+
+@app.post("/rezepte/{rezept_id}/bewertung", response_model=BewertungResponse)
+def bewerte_rezept(
+    rezept_id: int,
+    data: BewertungCreate,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    if not 1 <= data.sterne <= 5:
+        raise HTTPException(status_code=400, detail="Sterne müssen zwischen 1 und 5 liegen")
+    rezept = db.query(Kochrezepte).filter(Kochrezepte.id == rezept_id).first()
+    if not rezept:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    if rezept.username == current_username:
+        raise HTTPException(status_code=400, detail="Eigene Rezepte können nicht bewertet werden")
+    bestehend = db.query(Bewertung).filter(
+        Bewertung.rezept_id == rezept_id,
+        Bewertung.username == current_username
+    ).first()
+    if bestehend:
+        bestehend.sterne = data.sterne
+        db.commit()
+        db.refresh(bestehend)
+        return bestehend
+    bewertung = Bewertung(rezept_id=rezept_id, username=current_username, sterne=data.sterne)
+    db.add(bewertung)
+    db.commit()
+    db.refresh(bewertung)
+    return bewertung
 
 
 # ---------------------------------------------------------------------------

@@ -39,6 +39,7 @@ class RezeptCreate(BaseModel):
     zeit: str
     zutaten: str
     description: str
+    image_url: str = ''
 
 class RezeptResponse(BaseModel):
     id: int
@@ -47,5 +48,39 @@ class RezeptResponse(BaseModel):
     zeit: str
     zutaten: str
     description: str
+    image_url: str
+
+    model_config = {"from_attributes": True}
+    
+class RezeptCreate(BaseModel):
+    Kochrezept_Name: str
+    kategorie: str
+    zeit: str
+    zutaten: str
+    description: str
+    image_url: str = ""
+    is_public: bool = False
+
+class RezeptResponse(BaseModel):
+    id: int
+    Kochrezept_Name: str
+    kategorie: str
+    zeit: str
+    zutaten: str
+    description: str
+    image_url: str
+    is_public: bool
+    durchschnitt: float = 0.0
+    anzahl_bewertungen: int = 0
+
+    model_config = {"from_attributes": True}
+
+class BewertungCreate(BaseModel):
+    sterne: int
+
+class BewertungResponse(BaseModel):
+    id: int
+    sterne: int
+    username: str
 
     model_config = {"from_attributes": True}
