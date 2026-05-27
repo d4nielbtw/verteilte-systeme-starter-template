@@ -103,8 +103,6 @@ def get_profile(
     return user
 
 
-# ---------------------------------------------------------------------------
-# TODO: Eure eigenen Endpoints hier einfügen
 
 @app.get("/rezepte", response_model=list[RezeptResponse])
 def get_rezepte(
@@ -266,19 +264,3 @@ def bewerte_rezept(
     db.commit()
     db.refresh(bewertung)
     return bewertung
-
-
-# ---------------------------------------------------------------------------
-
-# Beispiel:
-# @app.get("/items")
-# def get_items(db: Session = Depends(get_db)):
-#     return db.query(Item).all()
-#
-# @app.post("/items", status_code=201)
-# def create_item(data: ItemCreate, db: Session = Depends(get_db)):
-#     item = Item(**data.model_dump())
-#     db.add(item)
-#     db.commit()
-#     db.refresh(item)
-#     return item

@@ -31,7 +31,6 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
-# TODO: Fügt hier eure eigenen Schemas hinzu
 
 class RezeptCreate(BaseModel):
     Kochrezept_Name: str
