@@ -17,6 +17,7 @@
   let myRecipes = $state([]);
   let showForm = $state(false);
   let editRecipe = $state(null);
+  let selectedRecipe = $state(null);
   let form = $state({ Kochrezept_Name: '', kategorie: '', zeit: '', zutaten: '', description: '', image_url: '', is_public: false });
 
   // Zutaten
@@ -257,7 +258,6 @@
       <h2>Öffentliche Rezepte</h2>
       <p class="page-sub">Entdecke Rezepte aus der Community</p>
 
-      <!-- Filter -->
       <div class="filter-bar">
         <input class="search-input" type="text" bind:value={searchPublic} placeholder="🔍 Suchen..."/>
         <select bind:value={filterKatPublic}>
@@ -280,7 +280,7 @@
 
       <div class="grid">
         {#each filteredPublic as r}
-          <div class="recipe-card">
+          <div class="recipe-card" role="button" tabindex="0" onclick={() => selectedRecipe = r} onkeydown={() => selectedRecipe = r}>
             {#if r.image_url}
               <img src={r.image_url} alt={r.Kochrezept_Name} class="recipe-img"/>
             {/if}
@@ -289,7 +289,7 @@
               <span class="time">⏱ {r.zeit}</span>
             </div>
             <h3>{r.Kochrezept_Name}</h3>
-            <p class="desc">{r.description}</p>
+            <p class="author">👤 {r.username}</p>
             <div class="zutaten-tags">
               {#each r.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
                 <span class="zutat-tag">{z}</span>
@@ -303,7 +303,7 @@
               </span>
             </div>
             {#if loggedIn}
-              <div class="rate-row">
+              <div class="rate-row" onclick={(e) => e.stopPropagation()}>
                 <span class="rate-label">Bewerten:</span>
                 {#each [1,2,3,4,5] as s}
                   <button class="star-btn" onclick={() => bewerten(r.id, s)}>★</button>
@@ -311,7 +311,7 @@
               </div>
             {:else}
               <p class="login-hint">
-                <button class="link-btn" onclick={() => { page = 'login'; showRegister = false; }}>Anmelden</button>
+                <button class="link-btn" onclick={(e) => { e.stopPropagation(); page = 'login'; showRegister = false; }}>Anmelden</button>
                 um zu bewerten
               </p>
             {/if}
@@ -330,7 +330,6 @@
         <button class="btn-add" onclick={openAdd}>+ Rezept hinzufügen</button>
       </div>
 
-      <!-- Filter -->
       <div class="filter-bar">
         <input class="search-input" type="text" bind:value={searchMeine} placeholder="🔍 Suchen..."/>
         <select bind:value={filterKatMeine}>
@@ -353,7 +352,7 @@
 
       <div class="grid">
         {#each filteredMeine as r}
-          <div class="recipe-card">
+          <div class="recipe-card" role="button" tabindex="0" onclick={() => selectedRecipe = r} onkeydown={() => selectedRecipe = r}>
             {#if r.image_url}
               <img src={r.image_url} alt={r.Kochrezept_Name} class="recipe-img"/>
             {/if}
@@ -362,7 +361,6 @@
               <span class="time">⏱ {r.zeit}</span>
             </div>
             <h3>{r.Kochrezept_Name}</h3>
-            <p class="desc">{r.description}</p>
             <div class="zutaten-tags">
               {#each r.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
                 <span class="zutat-tag">{z}</span>
@@ -382,7 +380,7 @@
                 <span class="badge private">🔒 Privat</span>
               {/if}
             </div>
-            <div class="actions">
+            <div class="actions" onclick={(e) => e.stopPropagation()}>
               <button class="btn-edit" onclick={() => openEdit(r)}>Bearbeiten</button>
               <button class="btn-delete" onclick={() => deleteRecipe(r.id)}>Löschen</button>
             </div>
@@ -392,6 +390,40 @@
     </div>
   {/if}
 
+  <!-- Detail Modal -->
+  {#if selectedRecipe}
+    <div class="overlay" role="button" tabindex="0" onclick={() => selectedRecipe = null} onkeydown={() => selectedRecipe = null}>
+      <div class="modal detail-modal" role="button" tabindex="0" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+        {#if selectedRecipe.image_url}
+          <img src={selectedRecipe.image_url} alt={selectedRecipe.Kochrezept_Name} class="detail-img"/>
+        {/if}
+        <div class="detail-top">
+          <span class="category">{selectedRecipe.kategorie}</span>
+          <span class="time">⏱ {selectedRecipe.zeit}</span>
+        </div>
+        <h3>{selectedRecipe.Kochrezept_Name}</h3>
+        {#if selectedRecipe.username}
+          <p class="author">👤 {selectedRecipe.username}</p>
+        {/if}
+        <p class="detail-desc">{selectedRecipe.description}</p>
+        <div class="zutaten-tags">
+          {#each selectedRecipe.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
+            <span class="zutat-tag">{z}</span>
+          {/each}
+        </div>
+        <div class="rating-section">
+          <span class="stars-display">{sterne(Math.round(selectedRecipe.durchschnitt))}</span>
+          <span class="rating-info">
+            {selectedRecipe.durchschnitt > 0 ? selectedRecipe.durchschnitt.toFixed(1) : '–'}
+            ({selectedRecipe.anzahl_bewertungen} {selectedRecipe.anzahl_bewertungen === 1 ? 'Bewertung' : 'Bewertungen'})
+          </span>
+        </div>
+        <button class="btn-cancel" onclick={() => selectedRecipe = null}>Schließen</button>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Form Modal -->
   {#if showForm}
     <div class="overlay" role="button" tabindex="0" onclick={() => showForm = false} onkeydown={() => showForm = false}>
       <div class="modal" role="button" tabindex="0" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
@@ -504,7 +536,6 @@
   }
 
   select:focus { border-color: #111; }
-
   .error { font-size: 12px; color: #c0392b; }
 
   button {
@@ -520,19 +551,13 @@
   .main { max-width: 1100px; margin: 0 auto; padding: 40px; }
   .main h2 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
 
-  /* Filter Bar */
-  .filter-bar {
-    display: flex; flex-wrap: wrap; gap: 10px;
-    margin: 20px 0; align-items: center;
-  }
-
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; align-items: center; }
   .filter-bar select { width: auto; min-width: 160px; }
   .search-input { width: auto; min-width: 180px; flex: 1; }
 
   .btn-reset {
     width: auto; padding: 9px 14px; background: #fff; color: #888;
-    border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px;
-    cursor: pointer; white-space: nowrap;
+    border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap;
   }
 
   .btn-reset:hover { background: #f5f5f5; color: #c0392b; border-color: #c0392b; }
@@ -546,14 +571,17 @@
   .recipe-card {
     background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
     padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    cursor: pointer; transition: box-shadow .2s, transform .15s;
   }
+
+  .recipe-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
 
   .recipe-img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; }
   .recipe-top { display: flex; justify-content: space-between; align-items: center; }
   .category { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #999; }
   .time { font-size: 12px; color: #aaa; }
   .recipe-card h3 { font-size: 16px; font-weight: 500; }
-  .desc { font-size: 13px; color: #666; }
+  .author { font-size: 12px; color: #aaa; }
 
   .zutaten-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
   .zutat-tag { font-size: 11px; padding: 3px 8px; background: #f5f5f5; color: #555; border-radius: 20px; white-space: nowrap; }
@@ -576,11 +604,7 @@
     font-size: 12px; padding: 4px 10px; background: #f0f0f0; color: #333; border-radius: 20px;
   }
 
-  .zutat-remove {
-    width: auto; padding: 0; background: none; color: #999;
-    border: none; font-size: 11px; cursor: pointer; line-height: 1;
-  }
-
+  .zutat-remove { width: auto; padding: 0; background: none; color: #999; border: none; font-size: 11px; cursor: pointer; line-height: 1; }
   .zutat-remove:hover { background: none; color: #c0392b; }
 
   .rating-section { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
@@ -590,20 +614,12 @@
   .rate-row { display: flex; align-items: center; gap: 2px; margin-top: 2px; }
   .rate-label { font-size: 12px; color: #999; margin-right: 4px; }
 
-  .star-btn {
-    width: auto; padding: 2px 4px; background: none; color: #ccc;
-    border: none; font-size: 18px; cursor: pointer; transition: color .15s;
-  }
-
+  .star-btn { width: auto; padding: 2px 4px; background: none; color: #ccc; border: none; font-size: 18px; cursor: pointer; transition: color .15s; }
   .star-btn:hover { background: none; color: #f0a500; }
 
   .login-hint { font-size: 12px; color: #aaa; margin-top: 2px; }
 
-  .link-btn {
-    width: auto; background: none; color: #111; border: none;
-    font-size: 12px; padding: 0; text-decoration: underline; cursor: pointer; display: inline;
-  }
-
+  .link-btn { width: auto; background: none; color: #111; border: none; font-size: 12px; padding: 0; text-decoration: underline; cursor: pointer; display: inline; }
   .link-btn:hover { background: none; color: #555; }
 
   .visibility { margin-top: 2px; }
@@ -623,6 +639,11 @@
     background: #fff; border-radius: 10px; padding: 32px; width: 440px;
     display: flex; flex-direction: column; gap: 10px; max-height: 90vh; overflow-y: auto;
   }
+
+  .detail-modal { width: 520px; }
+  .detail-img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; }
+  .detail-top { display: flex; justify-content: space-between; align-items: center; }
+  .detail-desc { font-size: 14px; color: #444; line-height: 1.7; }
 
   .modal h3 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
 
