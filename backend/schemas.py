@@ -17,7 +17,8 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: EmailStr
-    
+
+   
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -30,26 +31,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
-
-
-class RezeptCreate(BaseModel):
-    Kochrezept_Name: str
-    kategorie: str
-    zeit: str
-    zutaten: str
-    description: str
-    image_url: str = ''
-
-class RezeptResponse(BaseModel):
-    id: int
-    Kochrezept_Name: str
-    kategorie: str
-    zeit: str
-    zutaten: str
-    description: str
-    image_url: str
-
-    model_config = {"from_attributes": True}
     
 class RezeptCreate(BaseModel):
     Kochrezept_Name: str
@@ -71,6 +52,7 @@ class RezeptResponse(BaseModel):
     is_public: bool
     durchschnitt: float = 0.0
     anzahl_bewertungen: int = 0
+    username: str
 
     model_config = {"from_attributes": True}
 

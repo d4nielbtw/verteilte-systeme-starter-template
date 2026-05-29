@@ -174,7 +174,8 @@ def rezept_mit_bewertung(rezept):
         "image_url": rezept.image_url,
         "is_public": rezept.is_public,
         "durchschnitt": durchschnitt,
-        "anzahl_bewertungen": anzahl
+        "anzahl_bewertungen": anzahl,
+        "username": rezept.username
     }
 
 @app.get("/startseite", response_model=list[RezeptResponse])
