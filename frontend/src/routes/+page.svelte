@@ -402,9 +402,6 @@
           <span class="time">⏱ {selectedRecipe.zeit}</span>
         </div>
         <h3>{selectedRecipe.Kochrezept_Name}</h3>
-        {#if selectedRecipe.username}
-          <p class="author">👤 {selectedRecipe.username}</p>
-        {/if}
         <p class="detail-desc">{selectedRecipe.description}</p>
         <div class="zutaten-tags">
           {#each selectedRecipe.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
