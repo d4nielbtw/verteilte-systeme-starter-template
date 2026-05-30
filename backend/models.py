@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import String, ForeignKey, Boolean, Integer
+from sqlalchemy import String, ForeignKey, Boolean, Integer, Text
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy.sql import func
 
@@ -25,7 +25,7 @@ class Kochrezepte(Base):
     Kochrezept_Name : Mapped[str] = mapped_column(String(100), nullable=False)
     username        : Mapped[str] = mapped_column(String(100), ForeignKey("users.username"))
     image_url       : Mapped[str] = mapped_column(String(500), nullable=False, default="")
-    description     : Mapped[str] = mapped_column(String(500), nullable=False)
+    description     : Mapped[str] = mapped_column(Text, nullable=False)
     kategorie       : Mapped[str] = mapped_column(String(100), nullable=False)
     zeit            : Mapped[str] = mapped_column(String(50), nullable=False)
     zutaten         : Mapped[str] = mapped_column(String(1000), nullable=False)
@@ -47,3 +47,13 @@ class Bewertung(Base):
 
     rezept: Mapped["Kochrezepte"] = relationship(back_populates="bewertungen")
     autor : Mapped["User"] = relationship(back_populates="bewertungen")
+    
+class Favorit(Base):
+    __tablename__ = "favoriten"
+
+    id        : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    rezept_id : Mapped[int] = mapped_column(ForeignKey("Kochrezepte.id"))
+    username  : Mapped[str] = mapped_column(String(100), ForeignKey("users.username"))
+
+    rezept: Mapped["Kochrezepte"] = relationship()
+    autor : Mapped["User"] = relationship()

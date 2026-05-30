@@ -10,15 +10,19 @@
   let showRegister = $state(false);
   let token = $state('');
 
+  // Seiten: 'start' | 'meine' | 'favoriten' | 'login'
   let page = $state('start');
 
   // Rezepte
   let publicRecipes = $state([]);
   let myRecipes = $state([]);
+  let favoritenRecipes = $state([]);
   let showForm = $state(false);
   let editRecipe = $state(null);
   let selectedRecipe = $state(null);
   let form = $state({ Kochrezept_Name: '', kategorie: '', zeit: '', zutaten: '', description: '', image_url: '', is_public: false });
+  let meineBewertungen = $state({});
+  let meineFavoriten = $state([]);
 
   // Zutaten
   let zutatenListe = $state([]);
@@ -35,6 +39,12 @@
   let filterKatMeine = $state('');
   let filterZeitMeine = $state('');
   let filterZutatMeine = $state('');
+
+  // Filter Favoriten
+  let searchFav = $state('');
+  let filterKatFav = $state('');
+  let filterZeitFav = $state('');
+  let filterZutatFav = $state('');
 
   const API = 'http://localhost:8000';
 
@@ -69,6 +79,8 @@
       page = 'start';
       await loadPublic();
       await loadMyRecipes();
+      await loadMeineBewertungen();
+      await loadMeineFavoriten();
     } else {
       error = 'Benutzername oder Passwort falsch.';
     }
@@ -97,6 +109,9 @@
     loggedIn = false;
     token = '';
     myRecipes = [];
+    meineBewertungen = {};
+    meineFavoriten = [];
+    favoritenRecipes = [];
     page = 'start';
     localStorage.removeItem('token');
   }
@@ -106,6 +121,38 @@
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) myRecipes = await res.json();
+  }
+
+  async function loadMeineBewertungen() {
+    const res = await fetch(`${API}/meine-bewertungen`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) meineBewertungen = await res.json();
+  }
+
+  async function loadMeineFavoriten() {
+    const res = await fetch(`${API}/meine-favoriten`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) meineFavoriten = await res.json();
+  }
+
+  async function loadFavoritenRezepte() {
+    const res = await fetch(`${API}/favoriten-rezepte`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) favoritenRecipes = await res.json();
+  }
+
+  async function toggleFavorit(rezeptId, e) {
+    if (e) e.stopPropagation();
+    if (!loggedIn) return;
+    await fetch(`${API}/rezepte/${rezeptId}/favorit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    await loadMeineFavoriten();
+    if (page === 'favoriten') await loadFavoritenRezepte();
   }
 
   function openAdd() {
@@ -176,6 +223,7 @@
       body: JSON.stringify({ sterne: s })
     });
     await loadPublic();
+    await loadMeineBewertungen();
   }
 
   function sterne(n) {
@@ -199,14 +247,11 @@
 
   let filteredPublic = $derived(filterRezepte(publicRecipes, searchPublic, filterKatPublic, filterZeitPublic, filterZutatPublic));
   let filteredMeine = $derived(filterRezepte(myRecipes, searchMeine, filterKatMeine, filterZeitMeine, filterZutatMeine));
+  let filteredFav = $derived(filterRezepte(favoritenRecipes, searchFav, filterKatFav, filterZeitFav, filterZutatFav));
 
-  function resetFiltersPublic() {
-    searchPublic = ''; filterKatPublic = ''; filterZeitPublic = ''; filterZutatPublic = '';
-  }
-
-  function resetFiltersMeine() {
-    searchMeine = ''; filterKatMeine = ''; filterZeitMeine = ''; filterZutatMeine = '';
-  }
+  function resetFiltersPublic() { searchPublic = ''; filterKatPublic = ''; filterZeitPublic = ''; filterZutatPublic = ''; }
+  function resetFiltersMeine() { searchMeine = ''; filterKatMeine = ''; filterZeitMeine = ''; filterZutatMeine = ''; }
+  function resetFiltersFav() { searchFav = ''; filterKatFav = ''; filterZeitFav = ''; filterZutatFav = ''; }
 </script>
 
 {#if !loggedIn && page === 'login'}
@@ -246,6 +291,7 @@
       <button class="nav-btn" class:active={page === 'start'} onclick={() => page = 'start'}>Startseite</button>
       {#if loggedIn}
         <button class="nav-btn" class:active={page === 'meine'} onclick={() => { page = 'meine'; loadMyRecipes(); }}>Meine Rezepte</button>
+        <button class="nav-btn" class:active={page === 'favoriten'} onclick={() => { page = 'favoriten'; loadFavoritenRezepte(); }}>⭐ Favoriten</button>
         <button class="nav-btn nav-logout" onclick={logout}>Abmelden</button>
       {:else}
         <button class="nav-btn nav-login" onclick={() => { page = 'login'; showRegister = false; }}>Anmelden</button>
@@ -253,6 +299,7 @@
     </div>
   </nav>
 
+  <!-- STARTSEITE -->
   {#if page === 'start'}
     <div class="main">
       <h2>Öffentliche Rezepte</h2>
@@ -281,9 +328,19 @@
       <div class="grid">
         {#each filteredPublic as r}
           <div class="recipe-card" role="button" tabindex="0" onclick={() => selectedRecipe = r} onkeydown={() => selectedRecipe = r}>
-            {#if r.image_url}
-              <img src={r.image_url} alt={r.Kochrezept_Name} class="recipe-img"/>
-            {/if}
+            <div class="card-img-wrap">
+              {#if r.image_url}
+                <img src={r.image_url} alt={r.Kochrezept_Name} class="recipe-img"/>
+              {/if}
+              {#if loggedIn}
+                <button
+                  class="fav-btn"
+                  class:fav-active={meineFavoriten.includes(r.id)}
+                  onclick={(e) => toggleFavorit(r.id, e)}
+                  title={meineFavoriten.includes(r.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+                >⭐</button>
+              {/if}
+            </div>
             <div class="recipe-top">
               <span class="category">{r.kategorie}</span>
               <span class="time">⏱ {r.zeit}</span>
@@ -303,10 +360,10 @@
               </span>
             </div>
             {#if loggedIn}
-              <div class="rate-row" onclick={(e) => e.stopPropagation()}>
-                <span class="rate-label">Bewerten:</span>
+              <div class="rate-row" role="group" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+                <span class="rate-label">Deine Bewertung:</span>
                 {#each [1,2,3,4,5] as s}
-                  <button class="star-btn" onclick={() => bewerten(r.id, s)}>★</button>
+                  <button class="star-btn" class:rated={meineBewertungen[r.id] >= s} onclick={() => bewerten(r.id, s)}>★</button>
                 {/each}
               </div>
             {:else}
@@ -320,6 +377,7 @@
       </div>
     </div>
 
+  <!-- MEINE REZEPTE -->
   {:else if page === 'meine'}
     <div class="main">
       <div class="page-header">
@@ -380,9 +438,71 @@
                 <span class="badge private">🔒 Privat</span>
               {/if}
             </div>
-            <div class="actions" onclick={(e) => e.stopPropagation()}>
+            <div class="actions" role="group" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
               <button class="btn-edit" onclick={() => openEdit(r)}>Bearbeiten</button>
               <button class="btn-delete" onclick={() => deleteRecipe(r.id)}>Löschen</button>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+
+  <!-- FAVORITEN -->
+  {:else if page === 'favoriten'}
+    <div class="main">
+      <h2>⭐ Meine Favoriten</h2>
+      <p class="page-sub">Deine gespeicherten Lieblingsrezepte</p>
+
+      <div class="filter-bar">
+        <input class="search-input" type="text" bind:value={searchFav} placeholder="🔍 Suchen..."/>
+        <select bind:value={filterKatFav}>
+          <option value="">Alle Kategorien</option>
+          {#each kategorien as k}<option value={k}>{k}</option>{/each}
+        </select>
+        <select bind:value={filterZeitFav}>
+          <option value="">Alle Zeiten</option>
+          {#each zeiten as z}<option value={z}>{z}</option>{/each}
+        </select>
+        <input class="search-input" type="text" bind:value={filterZutatFav} placeholder="Zutat filtern..."/>
+        {#if searchFav || filterKatFav || filterZeitFav || filterZutatFav}
+          <button class="btn-reset" onclick={resetFiltersFav}>✕ Zurücksetzen</button>
+        {/if}
+      </div>
+
+      {#if filteredFav.length === 0}
+        <p class="empty">Noch keine Favoriten gespeichert.</p>
+      {/if}
+
+      <div class="grid">
+        {#each filteredFav as r}
+          <div class="recipe-card" role="button" tabindex="0" onclick={() => selectedRecipe = r} onkeydown={() => selectedRecipe = r}>
+            <div class="card-img-wrap">
+              {#if r.image_url}
+                <img src={r.image_url} alt={r.Kochrezept_Name} class="recipe-img"/>
+              {/if}
+              <button
+                class="fav-btn fav-active"
+                onclick={(e) => { toggleFavorit(r.id, e); loadFavoritenRezepte(); }}
+                title="Aus Favoriten entfernen"
+              >⭐</button>
+            </div>
+            <div class="recipe-top">
+              <span class="category">{r.kategorie}</span>
+              <span class="time">⏱ {r.zeit}</span>
+            </div>
+            <h3>{r.Kochrezept_Name}</h3>
+            <p class="author">👤 {r.username}</p>
+            <div class="zutaten-tags">
+              {#each r.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
+                <span class="zutat-tag">{z}</span>
+              {/each}
+            </div>
+            <div class="rating-section">
+              <span class="stars-display">{sterne(Math.round(r.durchschnitt))}</span>
+              <span class="rating-info">
+                {r.durchschnitt > 0 ? r.durchschnitt.toFixed(1) : '–'}
+                ({r.anzahl_bewertungen} {r.anzahl_bewertungen === 1 ? 'Bewertung' : 'Bewertungen'})
+              </span>
             </div>
           </div>
         {/each}
@@ -402,6 +522,9 @@
           <span class="time">⏱ {selectedRecipe.zeit}</span>
         </div>
         <h3>{selectedRecipe.Kochrezept_Name}</h3>
+        {#if selectedRecipe.username}
+          <p class="author">👤 {selectedRecipe.username}</p>
+        {/if}
         <p class="detail-desc">{selectedRecipe.description}</p>
         <div class="zutaten-tags">
           {#each selectedRecipe.zutaten.split(',').map(z => z.trim()).filter(z => z) as z}
@@ -573,7 +696,28 @@
 
   .recipe-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
 
-  .recipe-img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; }
+  /* Favoriten Stern */
+  .card-img-wrap { position: relative; }
+
+  .fav-btn {
+    position: absolute; top: 8px; right: 8px;
+    width: 32px; height: 32px; padding: 0;
+    background: rgba(255,255,255,.9); border: none; border-radius: 50%;
+    font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: transform .15s, background .2s;
+    filter: grayscale(1); opacity: .6;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+
+  .fav-btn:hover { background: #fff; filter: grayscale(0); opacity: 1; transform: scale(1.1); }
+  .fav-btn.fav-active { filter: grayscale(0); opacity: 1; }
+
+  /* Wenn kein Bild vorhanden */
+  .card-img-wrap:not(:has(img)) .fav-btn {
+    position: static; margin-bottom: 4px; align-self: flex-end;
+  }
+
+  .recipe-img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; display: block; }
   .recipe-top { display: flex; justify-content: space-between; align-items: center; }
   .category { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #999; }
   .time { font-size: 12px; color: #aaa; }
@@ -613,6 +757,7 @@
 
   .star-btn { width: auto; padding: 2px 4px; background: none; color: #ccc; border: none; font-size: 18px; cursor: pointer; transition: color .15s; }
   .star-btn:hover { background: none; color: #f0a500; }
+  .star-btn.rated { color: #f0a500; }
 
   .login-hint { font-size: 12px; color: #aaa; margin-top: 2px; }
 

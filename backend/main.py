@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from schemas import Token, UserRegister, UserResponse, RezeptCreate, RezeptResponse, BewertungCreate, BewertungResponse
-from models import User, Kochrezepte, Bewertung
+from models import User, Kochrezepte, Bewertung, Favorit
 from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import joinedload
 
@@ -265,3 +265,50 @@ def bewerte_rezept(
     db.commit()
     db.refresh(bewertung)
     return bewertung
+
+@app.get("/meine-bewertungen")
+def get_meine_bewertungen(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    bewertungen = db.query(Bewertung).filter(Bewertung.username == current_username).all()
+    return {b.rezept_id: b.sterne for b in bewertungen}
+
+@app.get("/meine-favoriten")
+def get_meine_favoriten(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    favoriten = db.query(Favorit).filter(Favorit.username == current_username).all()
+    return [f.rezept_id for f in favoriten]
+
+@app.post("/rezepte/{rezept_id}/favorit", status_code=200)
+def toggle_favorit(
+    rezept_id: int,
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    bestehend = db.query(Favorit).filter(
+        Favorit.rezept_id == rezept_id,
+        Favorit.username == current_username
+    ).first()
+    if bestehend:
+        db.delete(bestehend)
+        db.commit()
+        return {"favorit": False}
+    favorit = Favorit(rezept_id=rezept_id, username=current_username)
+    db.add(favorit)
+    db.commit()
+    return {"favorit": True}
+
+@app.get("/favoriten-rezepte", response_model=list[RezeptResponse])
+def get_favoriten_rezepte(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    favoriten = db.query(Favorit).filter(Favorit.username == current_username).all()
+    rezept_ids = [f.rezept_id for f in favoriten]
+    rezepte = db.query(Kochrezepte).options(joinedload(Kochrezepte.bewertungen)).filter(
+        Kochrezepte.id.in_(rezept_ids)
+    ).all()
+    return [rezept_mit_bewertung(r) for r in rezepte]
