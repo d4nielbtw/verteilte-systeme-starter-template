@@ -360,7 +360,7 @@
               </span>
             </div>
             {#if loggedIn}
-              <div class="rate-row" role="group" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+              <div class="rate-row" role="group">
                 <span class="rate-label">Deine Bewertung:</span>
                 {#each [1,2,3,4,5] as s}
                   <button class="star-btn" class:rated={meineBewertungen[r.id] >= s} onclick={() => bewerten(r.id, s)}>★</button>
@@ -438,7 +438,7 @@
                 <span class="badge private">🔒 Privat</span>
               {/if}
             </div>
-            <div class="actions" role="group" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+            <div class="actions" role="group">
               <button class="btn-edit" onclick={() => openEdit(r)}>Bearbeiten</button>
               <button class="btn-delete" onclick={() => deleteRecipe(r.id)}>Löschen</button>
             </div>
