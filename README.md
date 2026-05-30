@@ -6,13 +6,31 @@ Startpunkt für euer Semester-4-Projekt. Enthält eine lauffähige Boilerplate m
 - **Frontend**: SvelteKit mit API-Hilfsfunktionen
 - **Infrastruktur**: Docker Compose für alle Services
 
+
+## Set up: 
+- Github Repository
+- Git runterladen
+- Git Acc
+- Docker Desktop runterladen
+
+Um die Datenbank zu sehen, bzw zuzugreifen muss man noch Railway mit dem Github repository verknüpfen.
+
+Zum Start der App müssen folgende Extensions Runtergeladen sein:
+- Python-Extension-Pack 
+- Svelte for VS Code Extension
+- Docker DX Extension 
+- Github Codespace extension
+
+Repository nach VSCode klonen
+
+
 ## Quickstart
 
 ```bash
 # 1. .env aus Vorlage erstellen und Werte anpassen
 cp .env.example .env
 
-# 2. SECRET_KEY generieren (für JWT) – z.B. mit:
+# 2. SECRET_KEY generieren im bash generieren(für JWT) – z.B. mit:
 openssl rand -hex 32
 # Den Output in die `.env`-Datei als `SECRET_KEY` eintragen.
 
@@ -61,3 +79,9 @@ Die Swagger UI unter `http://localhost:8000/docs` hat einen eingebauten **Author
 1. Benutzer anlegen: `POST /auth/register`
 2. Einloggen: Authorize-Button klicken → username + password eingeben
 3. Geschützte Endpoints wie `GET /my-profile` aufrufen
+
+
+
+Architekturdiagramm:
+
+![alt text](image.png)
