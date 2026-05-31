@@ -259,10 +259,3 @@ def get_favoriten_rezepte(
     ).all()
     return [rezept_mit_bewertung(r) for r in rezepte]
 
-@app.get("/meine-favoriten")
-def get_meine_favoriten(
-    current_username: Annotated[str, Depends(get_current_user)],
-    db: Session = Depends(get_db)
-):
-    favoriten = db.query(Favorit).filter(Favorit.username == current_username).all()
-    return [f.rezept_id for f in favoriten]
