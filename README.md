@@ -26,16 +26,13 @@ Repository nach VSCode klonen (https://github.com/d4nielbtw/verteilte-systeme-st
 
 ## Quickstart
 
-```bash
-# 1. .env aus Vorlage erstellen und Werte anpassen
-cp .env.example .env
 
-# 2. SECRET_KEY generieren im bash generieren(für JWT) – z.B. mit:
-openssl rand -hex 32
-# Den Output in die `.env`-Datei als `SECRET_KEY` eintragen.
+# 1. Docker Desktop öffnen
+
+# 2. .env ins Repository einfügen
 
 # 3. Alle Services bauen und starten
-docker compose up -d --build
+docker compose up --build
 
 # 4. Fertig!
 #    Frontend:  http://localhost:5173
