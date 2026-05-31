@@ -439,8 +439,8 @@
               {/if}
             </div>
             <div class="actions" role="group">
-              <button class="btn-edit" onclick={() => openEdit(r)}>Bearbeiten</button>
-              <button class="btn-delete" onclick={() => deleteRecipe(r.id)}>Löschen</button>
+              <button class="btn-edit"onclick={(e) => {e.stopPropagation();openEdit(r);}}>Bearbeiten</button>
+              <button class="btn-delete"onclick={(e) => {e.stopPropagation();deleteRecipe(r.id);}}>Löschen</button>
             </div>
           </div>
         {/each}
