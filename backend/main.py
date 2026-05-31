@@ -112,53 +112,6 @@ def get_rezepte(
     rezepte = db.query(Kochrezepte).options(joinedload(Kochrezepte.bewertungen)).filter(Kochrezepte.username == current_username).all()
     return [rezept_mit_bewertung(r) for r in rezepte]
 
-@app.post("/rezepte", response_model=RezeptResponse, status_code=201)
-def create_rezept(
-    data: RezeptCreate,
-    current_username: Annotated[str, Depends(get_current_user)],
-    db: Session = Depends(get_db)
-):
-    rezept = Kochrezepte(**data.model_dump(), username=current_username)
-    db.add(rezept)
-    db.commit()
-    db.refresh(rezept)
-    return rezept
-
-
-@app.delete("/rezepte/{rezept_id}", status_code=204)
-def delete_rezept(
-    rezept_id: int,
-    current_username: Annotated[str, Depends(get_current_user)],
-    db: Session = Depends(get_db)
-):
-    rezept = db.query(Kochrezepte).filter(
-        Kochrezepte.id == rezept_id,
-        Kochrezepte.username == current_username
-    ).first()
-    if not rezept:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
-    db.delete(rezept)
-    db.commit()
-
-
-@app.put("/rezepte/{rezept_id}", response_model=RezeptResponse)
-def update_rezept(
-    rezept_id: int,
-    data: RezeptCreate,
-    current_username: Annotated[str, Depends(get_current_user)],
-    db: Session = Depends(get_db)
-):
-    rezept = db.query(Kochrezepte).filter(
-        Kochrezepte.id == rezept_id,
-        Kochrezepte.username == current_username
-    ).first()
-    if not rezept:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
-    for key, value in data.model_dump().items():
-        setattr(rezept, key, value)
-    db.commit()
-    db.refresh(rezept)
-    return rezept
 
 def rezept_mit_bewertung(rezept):
     bewertungen = rezept.bewertungen
@@ -183,13 +136,6 @@ def get_oeffentliche_rezepte(db: Session = Depends(get_db)):
     rezepte = db.query(Kochrezepte).options(joinedload(Kochrezepte.bewertungen)).filter(Kochrezepte.is_public == True).all()
     return [rezept_mit_bewertung(r) for r in rezepte]
 
-@app.get("/rezepte", response_model=list[RezeptResponse])
-def get_rezepte(
-    current_username: Annotated[str, Depends(get_current_user)],
-    db: Session = Depends(get_db)
-):
-    rezepte = db.query(Kochrezepte).filter(Kochrezepte.username == current_username).all()
-    return [rezept_mit_bewertung(r) for r in rezepte]
 
 @app.post("/rezepte", response_model=RezeptResponse, status_code=201)
 def create_rezept(
@@ -312,3 +258,11 @@ def get_favoriten_rezepte(
         Kochrezepte.id.in_(rezept_ids)
     ).all()
     return [rezept_mit_bewertung(r) for r in rezepte]
+
+@app.get("/meine-favoriten")
+def get_meine_favoriten(
+    current_username: Annotated[str, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    favoriten = db.query(Favorit).filter(Favorit.username == current_username).all()
+    return [f.rezept_id for f in favoriten]
