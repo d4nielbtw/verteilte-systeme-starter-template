@@ -363,7 +363,7 @@
               <div class="rate-row" role="group">
                 <span class="rate-label">Deine Bewertung:</span>
                 {#each [1,2,3,4,5] as s}
-                  <button class="star-btn" class:rated={meineBewertungen[r.id] >= s} onclick={() => bewerten(r.id, s)}>★</button>
+                  <button class="star-btn" class:rated={meineBewertungen[r.id] >= s} onclick={(e) => { e.stopPropagation(); bewerten(r.id, s); }}>★</button>
                 {/each}
               </div>
             {:else}
